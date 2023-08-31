@@ -4,7 +4,7 @@ const { default: BigNumber } = require('bignumber.js')
 const { getAsset, getTotalSupply } = require('./queries')
 const { calculateInterestRate } = require('./helpers')
 
-const endpoint = 'https://api.thegraph.com/subgraphs/name/predy-dev/predy-fee-arbitrum'
+const endpoint = 'https://gateway-arbitrum.network.thegraph.com/api/ee4adbe988d12d9e26f42a6f559185df/subgraphs/id/Ab6Yh29tjhvhSFKbUYdXLYMnf3aiL8BUKdErNTLGx8b1'
 
 const query = gql`
   query ($address: String, $strategyId: Int) {
@@ -29,62 +29,92 @@ const query = gql`
 const strategies = [
   {
     id: 1,
+    chain: 'Arbitrum',
     symbol: 'USDC.e',
     poolMeta: 'Gamma short strategy of WETH-USDC.e 0.05% pool',
     strategyTokenAddress: '0x5037Df4301489C96F17E3E2eBE55bFF909098043'
   },
   {
     id: 2,
+    chain: 'Arbitrum',
     symbol: 'USDC.e',
     poolMeta: 'Gamma short strategy of ARB-USDC.e 0.3% pool',
     strategyTokenAddress: '0xBd0a8a71283c92123A3cAE4E7Cb71D410973A9e1'
   },
   {
     id: 3,
+    chain: 'Arbitrum',
     symbol: 'USDC.e',
     poolMeta: 'Gamma short strategy of LUSD-USDC.e 0.05% pool',
     strategyTokenAddress: '0xaA25788310eEf9E78e7D601EF727f19BE0944463'
   },
   {
     id: 4,
+    chain: 'Arbitrum',
     symbol: 'USDC.e',
     poolMeta: 'Gamma short strategy of WETH-USDC.e 0.05% extra pool',
     strategyTokenAddress: '0xde2781A9eA08E75149EF5EdC9CF97d44F1c05a0c'
+  },
+  {
+    id: 11,
+    chain: 'Arbitrum',
+    symbol: 'USDC.e',
+    poolMeta: 'Gamma long strategy of WETH-USDC.e 0.05% pool',
+    strategyTokenAddress: '0xaB921C57139E95c2B686c11E4d62838f593f061E'
+  },
+  {
+    id: 12,
+    chain: 'Arbitrum',
+    symbol: 'USDC.e',
+    poolMeta: 'Gamma long strategy of ARB-USDC.e 0.3% extra pool',
+    strategyTokenAddress: '0xb836B2324d4a7569061e6d6A758AB4428f36aB92'
+  },
+  {
+    id: 13,
+    chain: 'Arbitrum',
+    symbol: 'USDC.e',
+    poolMeta: 'Gamma long strategy of WETH-USDC.e 0.05% extra pool',
+    strategyTokenAddress: '0x090f0Ff8A2b1b0ce1a163179218f2E1C117E26D4'
   }
 ]
 
-
 const pairs = [{
+  chain: 'Arbitrum',
   pairId: 1,
   symbol: 'WETH',
   poolMeta: 'Lending Pool for WETH-USDC.e 0.05% LP position',
   tokenAddress: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',
   decimals: 18
 }, {
+  chain: 'Arbitrum',
   pairId: 2,
   symbol: 'ARB',
   poolMeta: 'Lending Pool for ARB-USDC.e 0.3% LP position',
   tokenAddress: '0x912CE59144191C1204E64559FE8253a0e49E6548',
   decimals: 18
 }, {
+  chain: 'Arbitrum',
   pairId: 3,
   symbol: 'WBTC',
   poolMeta: 'Lending Pool for WBTC-USDC.e 0.05% LP position',
   tokenAddress: '0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f',
   decimals: 8
 }, {
+  chain: 'Arbitrum',
   pairId: 4,
   symbol: 'GYEN',
   poolMeta: 'Lending Pool for GYEN-USDC.e 0.05% LP position',
   tokenAddress: '0x589d35656641d6aB57A545F08cf473eCD9B6D5F7',
   decimals: 6
 }, {
+  chain: 'Arbitrum',
   pairId: 5,
   symbol: 'LUSD',
   poolMeta: 'Lending Pool for LUSD-USDC.e 0.05% LP position',
   tokenAddress: '0x93b346b6BC2548dA6A1E7d98E9a421B42541425b',
   decimals: 18
 }, {
+  chain: 'Arbitrum',
   pairId: 6,
   symbol: 'WETH',
   poolMeta: 'Lending Pool for WETH-USDC.e 0.05% narrow range LP position',
@@ -140,7 +170,7 @@ const lendingApys = async () => {
       const usdcPrice = pricesEthereum[`arbitrum:${usdcAddress}`]?.price;
       const price = pricesEthereum[`arbitrum:${pair.tokenAddress}`]?.price;
 
-      const pairStatus = await getAsset(controller, pair.pairId);
+      const pairStatus = await getAsset(pair.chain.toLowerCase(), controller, pair.pairId);
 
       const stableSummary = getLendingSummary(pairStatus.stablePool.tokenStatus, pairStatus.stablePool.irmParams, usdcPrice, 6)
       const underlyingSummary = getLendingSummary(pairStatus.underlyingPool.tokenStatus, pairStatus.underlyingPool.irmParams, price, pair.decimals)
@@ -150,7 +180,7 @@ const lendingApys = async () => {
 
       return [{
         pool: `${stableSupplyToken}-arbitrum`,
-        chain: 'Arbitrum',
+        chain: pair.chain,
         project: 'predy-v5',
         symbol: 'USDC.e',
         poolMeta: pair.poolMeta,
@@ -161,7 +191,7 @@ const lendingApys = async () => {
         url: `https://v5app.predy.finance/arbitrum/trade/usdce/lending/${pair.pairId}`,
       }, {
         pool: `${underlyingSupplyToken}-arbitrum`,
-        chain: 'Arbitrum',
+        chain: pair.chain,
         project: 'predy-v5',
         symbol: pair.symbol,
         poolMeta: pair.poolMeta,
@@ -205,13 +235,13 @@ const strategyApys = async () => {
         prices[prices.length >= 7 ? 6 : prices.length - 1]
       )
 
-      const totalSupply = await getTotalSupply(strategy.strategyTokenAddress)
+      const totalSupply = await getTotalSupply(strategy.chain.toLowerCase(), strategy.strategyTokenAddress)
 
       const tvlUsd = (new BigNumber(totalSupply)).times(prices[0].closePrice).div(1e18).toNumber() / 1000000
 
       return {
         pool: `${strategy.strategyTokenAddress}-arbitrum`,
-        chain: 'Arbitrum',
+        chain: strategy.chain,
         project: 'predy-v5',
         symbol: strategy.symbol,
         poolMeta: strategy.poolMeta,
